@@ -1,0 +1,33 @@
+name: Sync with upstream repository
+
+on:
+  schedule:
+    - cron: '0 * * * *' # OGNI ORA (al minuto 0)
+  workflow_dispatch: # avvio manuale
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+      - name: Add upstream repository
+        run: |
+          git remote add upstream https://github.com/stremio-manager/EasyProxy.git || true
+      - name: Fetch upstream
+        run: git fetch upstream
+
+      - name: Merge upstream changes
+        run: |
+          git checkout main
+          git merge upstream/main --no-edit || echo "Nothing to merge"
+      - name: Push changes
+        run: git push origin main
