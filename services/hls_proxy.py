@@ -1431,12 +1431,13 @@ class HLSProxy:
                         )
                     
                     # Gestione special per manifest HLS
-                    # ✅ Gestisce manifest HLS standard e mascherati da .css (usati da DLHD)
-                    # Per .css, verifica se contiene #EXTM3U (signature HLS) per rilevare manifest mascherati
+                    # ✅ Gestisce manifest HLS standard
+                    # Nota: Il supporto per manifest mascherati da .css (DLHD vecchio stile) o .csv è mantenuto per compatibilità
                     is_hls_manifest = 'mpegurl' in content_type or stream_url.endswith('.m3u8')
-                    is_css_file = stream_url.endswith('mono.css')
+                    is_css_file = stream_url.endswith('mono.css') or stream_url.endswith('.css')
+                    is_csv_file = stream_url.endswith('.csv')
                     
-                    if is_hls_manifest or is_css_file:
+                    if is_hls_manifest or is_css_file or is_csv_file:
                         try:
                             # Leggi come bytes prima per evitare crash su decode
                             content_bytes = await resp.read()
@@ -1456,16 +1457,16 @@ class HLSProxy:
                                     }
                                 )
 
-                            # Per .css, verifica che sia effettivamente un manifest HLS
-                            if is_css_file and not manifest_content.strip().startswith('#EXTM3U'):
-                                # Non è un manifest HLS, restituisci come CSS normale
+                            # Per file mascherati, verifica che siano effettivamente manifest HLS
+                            if (is_css_file or is_csv_file) and not manifest_content.strip().startswith('#EXTM3U'):
+                                # Non è un manifest HLS, restituisci come file normale
                                 return web.Response(
                                     text=manifest_content,
-                                    content_type=content_type or 'text/css',
+                                    content_type=content_type or 'text/plain',
                                     headers={'Access-Control-Allow-Origin': '*'}
                                 )
                         except Exception as e:
-                             logger.error(f"Error processing manifest/css: {e}")
+                             logger.error(f"Error processing manifest/css/csv: {e}")
                              # Fallback to binary proxy
                              return web.Response(body=await resp.read(), status=resp.status, headers={'Access-Control-Allow-Origin': '*'})
                         
