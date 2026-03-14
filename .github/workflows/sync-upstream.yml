@@ -2,7 +2,7 @@ name: Sync upstream
 
 on:
   schedule:
-    - cron: '0 * * * *' # ogni ora
+    - cron: '0 1 * * *' # 03:00 in Italia
   workflow_dispatch:
 
 permissions:
